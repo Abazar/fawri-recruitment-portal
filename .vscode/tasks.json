@@ -1,0 +1,308 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Kill dev node processes",
+			"type": "shell",
+			"command": "taskkill /F /IM node.exe /T",
+			"isBackground": false
+		},
+		{
+			"label": "Restart dev servers cleanly",
+			"type": "shell",
+			"command": "taskkill /F /IM node.exe /T & rmdir /S /Q .next 2>nul & npm start",
+			"isBackground": true
+		},
+		{
+			"label": "Restart dev servers cleanly (ps)",
+			"type": "shell",
+			"command": "taskkill /F /IM node.exe /T; if (Test-Path .next) { Remove-Item -Recurse -Force .next }; npm start",
+			"isBackground": true
+		},
+		{
+			"label": "Check API health",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command \"(Invoke-WebRequest -UseBasicParsing http://localhost:3001/health).Content\"",
+			"isBackground": false
+		},
+		{
+			"label": "Check API health (ps)",
+			"type": "shell",
+			"command": "try { (Invoke-WebRequest -UseBasicParsing http://localhost:3001/health).Content } catch { $_.Exception.Message }",
+			"isBackground": false
+		},
+		{
+			"label": "Check web app port 3000",
+			"type": "shell",
+			"command": "try { (Invoke-WebRequest -UseBasicParsing http://localhost:3000).StatusCode } catch { $_.Exception.Message }",
+			"isBackground": false
+		},
+		{
+			"label": "DNS check ukzkyr1",
+			"type": "shell",
+			"command": "nslookup cluster0.ukzkyr1.mongodb.net",
+			"isBackground": false
+		},
+		{
+			"label": "DNS check ukzkyri",
+			"type": "shell",
+			"command": "nslookup cluster0.ukzkyri.mongodb.net",
+			"isBackground": false
+		},
+		{
+			"label": "Port check Atlas node 27017",
+			"type": "shell",
+			"command": "Test-NetConnection ac-klu0vjv-shard-00-00.ukzkyri.mongodb.net -Port 27017 | Select-Object ComputerName,RemotePort,TcpTestSucceeded | Format-List | Out-String",
+			"isBackground": false
+		},
+		{
+			"label": "Restart dev servers (after DB timeout tweak)",
+			"type": "shell",
+			"command": "taskkill /F /IM node.exe /T; if (Test-Path .next) { Remove-Item -Recurse -Force .next }; npm start",
+			"isBackground": true
+		},
+		{
+			"label": "Check DB readiness via /api guard",
+			"type": "shell",
+			"command": "try { (Invoke-WebRequest -UseBasicParsing http://localhost:3001/api/v1/auth/me).StatusCode } catch { if ($_.Exception.Response) { $_.Exception.Response.StatusCode.value__ } else { $_.Exception.Message } }",
+			"isBackground": false
+		},
+		{
+			"label": "Restart dev servers (more DB timeout)",
+			"type": "shell",
+			"command": "taskkill /F /IM node.exe /T; if (Test-Path .next) { Remove-Item -Recurse -Force .next }; npm start",
+			"isBackground": true
+		},
+		{
+			"label": "Check web 3000 after restart",
+			"type": "shell",
+			"command": "try { (Invoke-WebRequest -UseBasicParsing http://localhost:3000).StatusCode } catch { $_.Exception.Message }",
+			"isBackground": false
+		},
+		{
+			"label": "Kill process on port 3001",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"for /f \"tokens=5\" %%p in ('netstat -aon ^| findstr \":3001\" ^| findstr LISTENING') do taskkill /F /PID %%p"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Stop listener on 3001 (PowerShell)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$pids = Get-NetTCPConnection -LocalPort 3001 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique; foreach ($pid in $pids) { Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue }; Write-Host \"Killed PIDs:\" ($pids -join ',')"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Stop listener on 3001 (simple)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Get-NetTCPConnection -LocalPort 3001 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Start API (dev:api)",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"dev:api"
+			],
+			"isBackground": true
+		},
+		{
+			"label": "Check API DB guard status",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"try { $r = Invoke-WebRequest -Method POST -Uri http://localhost:3001/api/v1/auth/login -ContentType 'application/json' -Body '{}' -UseBasicParsing; Write-Host $r.StatusCode; Write-Host $r.Content } catch { if ($_.Exception.Response) { Write-Host $_.Exception.Response.StatusCode.value__; $sr = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream()); Write-Host $sr.ReadToEnd(); } else { Write-Host $_ } }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Check /api/v1/auth/login response",
+			"type": "shell",
+			"command": "curl",
+			"args": [
+				"-i",
+				"-s",
+				"-X",
+				"POST",
+				"http://localhost:3001/api/v1/auth/login",
+				"-H",
+				"Content-Type: application/json",
+				"-d",
+				"{}"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Restart API - stop 3001",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Get-NetTCPConnection -LocalPort 3001 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Restart API - start dev:api",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"dev:api"
+			],
+			"isBackground": true
+		},
+		{
+			"label": "Check /health dbConnected",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Invoke-RestMethod http://localhost:3001/health | ConvertTo-Json -Compress"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Seed database",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"seed"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Stop API on 3001",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Get-NetTCPConnection -LocalPort 3001 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Start API (dev:api)",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"dev:api"
+			],
+			"isBackground": true
+		},
+		{
+			"label": "Hard kill node.exe",
+			"type": "shell",
+			"command": "taskkill",
+			"args": [
+				"/F",
+				"/IM",
+				"node.exe",
+				"/T"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Start API only (dev:api)",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"dev:api"
+			],
+			"isBackground": true
+		},
+		{
+			"label": "Health check (curl.exe)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"curl.exe",
+				"http://localhost:3001/health"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Check /api/v1/auth/register response",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$email = \"test+\" + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() + \"@example.com\"; $bodyObj = @{ email=$email; password=\"Test@1234\"; firstName=\"Test\"; lastName=\"User\"; phone=\"1234567890\"; nationality=\"Testland\"; currentCountry=\"Testland\"; language=\"en\" }; $body = ($bodyObj | ConvertTo-Json -Compress); try { $r = Invoke-WebRequest -Method POST -Uri \"http://localhost:3001/api/v1/auth/register\" -ContentType \"application/json\" -Body $body -UseBasicParsing; Write-Output (\"STATUS=\" + $r.StatusCode); Write-Output $r.Content } catch { if ($_.Exception.Response) { Write-Output (\"STATUS=\" + $_.Exception.Response.StatusCode.value__); $sr = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream()); Write-Output $sr.ReadToEnd(); } else { Write-Output $_.Exception.Message } }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Register (curl.exe)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"set \"EMAIL=test%RANDOM%@example.com\" & curl.exe -i -s -X POST http://localhost:3001/api/v1/auth/register -H \"Content-Type: application/json\" -d \"{\\\"email\\\":\\\"%EMAIL%\\\",\\\"password\\\":\\\"Test@1234\\\",\\\"firstName\\\":\\\"Test\\\",\\\"lastName\\\":\\\"User\\\",\\\"phone\\\":\\\"1234567890\\\",\\\"nationality\\\":\\\"Testland\\\",\\\"currentCountry\\\":\\\"Testland\\\",\\\"language\\\":\\\"en\\\"}\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Register (curl.exe fixed)",
+			"type": "shell",
+			"command": "curl.exe",
+			"args": [
+				"-i",
+				"-s",
+				"-X",
+				"POST",
+				"http://localhost:3001/api/v1/auth/register",
+				"-H",
+				"Content-Type: application/json",
+				"-d",
+				"{\"email\":\"test-register@example.com\",\"password\":\"Test@1234\",\"firstName\":\"Test\",\"lastName\":\"User\",\"phone\":\"1234567890\",\"nationality\":\"Testland\",\"currentCountry\":\"Testland\",\"language\":\"en\"}"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Verify register (PowerShell)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$headers=@{ 'Content-Type'='application/json' }; $email=('rider+' + (Get-Random) + '@test.com'); $body=@{ email=$email; password='Test@1234'; firstName='Test'; lastName='Rider'; phone='1234567890'; nationality='Testland'; currentCountry='Testland'; language='en' } | ConvertTo-Json -Compress; try { $r=Invoke-WebRequest -Method Post -Uri 'http://localhost:3001/api/v1/auth/register' -Headers $headers -Body $body -UseBasicParsing; Write-Output ('STATUS=' + $r.StatusCode); Write-Output $r.Content } catch { if ($_.Exception.Response) { Write-Output ('STATUS=' + $_.Exception.Response.StatusCode.value__); Write-Output $_.ErrorDetails.Message } else { Write-Output $_.Exception.Message } }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Verify register (cmd->powershell)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"powershell -NoProfile -Command \"$headers=@{ 'Content-Type'='application/json' }; $email=('rider+' + (Get-Random) + '@test.com'); $body=@{ email=$email; password='Test@1234'; firstName='Test'; lastName='Rider'; phone='1234567890'; nationality='Testland'; currentCountry='Testland'; language='en' } | ConvertTo-Json -Compress; try { $r=Invoke-WebRequest -Method Post -Uri 'http://localhost:3001/api/v1/auth/register' -Headers $headers -Body $body -UseBasicParsing; Write-Output ('STATUS=' + $r.StatusCode); Write-Output $r.Content } catch { if ($_.Exception.Response) { Write-Output ('STATUS=' + $_.Exception.Response.StatusCode.value__); Write-Output $_.ErrorDetails.Message } else { Write-Output $_.Exception.Message } }\""
+			],
+			"isBackground": false
+		}
+	]
+}
