@@ -123,5 +123,4 @@ UserSchema.methods.resetLoginAttempts = async function () {
   await this.save();
 };
 
-const User = mongoose.model<IUser>('User', UserSchema);
-export default User;
+export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
