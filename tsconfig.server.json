@@ -1,13 +1,15 @@
 {
-  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "CommonJS",
-    "moduleResolution": "Node",
-    "allowImportingTsExtensions": true,
-    "lib": ["es2017"],
-    "types": ["node"],
-    "noEmit": true
+    "target": "ES2020",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "resolveJsonModule": true,
+    "moduleResolution": "node"
   },
-  "include": ["src/server/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/server/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
