@@ -103,16 +103,16 @@ export const updateMyApplication = async (request: FastifyRequest, reply: Fastif
 
     // Update application fields
     if (validatedData.personalInfo) {
-      application.personalInfo = {
-        ...application.personalInfo,
+      application.set('personalInfo', {
+        ...application.get('personalInfo'),
         ...validatedData.personalInfo,
-      };
+      });
     }
 
     if (validatedData.experience) {
       const exp = validatedData.experience;
-      application.experience = {
-        ...application.experience,
+      application.set('experience', {
+        ...application.get('experience'),
         hasMotorcycleLicense: exp.hasMotorcycleLicense,
         licenseNumber: exp.licenseNumber,
         licenseIssueDate: exp.licenseIssueDate ? new Date(exp.licenseIssueDate) : undefined,
@@ -121,17 +121,17 @@ export const updateMyApplication = async (request: FastifyRequest, reply: Fastif
         hasCommercialExperience: exp.hasCommercialExperience,
         previousEmployer: exp.previousEmployer,
         previousJobTitle: exp.previousJobTitle,
-      };
+      });
     }
 
     if (validatedData.preferences) {
       const pref = validatedData.preferences;
-      application.preferences = {
-        ...application.preferences,
+      application.set('preferences', {
+        ...application.get('preferences'),
         preferredStartDate: pref.preferredStartDate ? new Date(pref.preferredStartDate) : undefined,
         contractDuration: pref.contractDuration,
         willingToRelocate: pref.willingToRelocate ?? true,
-      };
+      });
     }
 
     await application.save();
@@ -149,7 +149,7 @@ export const updateMyApplication = async (request: FastifyRequest, reply: Fastif
         error: {
           code: 'VALIDATION_ERROR',
           message: 'Validation failed',
-          details: error.errors,
+          details: error.issues,
         },
         timestamp: new Date().toISOString(),
       });
@@ -196,7 +196,8 @@ export const submitApplication = async (request: FastifyRequest, reply: FastifyR
     }
 
     // Validate required fields before submission
-    if (!application.experience?.hasMotorcycleLicense) {
+    const experience = application.get('experience');
+    if (!experience?.hasMotorcycleLicense) {
       return reply.status(400).send({
         success: false,
         error: {
@@ -209,12 +210,14 @@ export const submitApplication = async (request: FastifyRequest, reply: FastifyR
 
     // Update status to submitted
     application.status = 'submitted';
-    application.statusHistory.push({
+    const statusHistory = application.get('statusHistory') || [];
+    statusHistory.push({
       status: 'submitted',
-      changedBy: userId as any,
+      changedBy: userId as string,
       changedAt: new Date(),
       notes: 'Application submitted by applicant',
     });
+    application.set('statusHistory', statusHistory);
 
     await application.save();
 
@@ -239,9 +242,9 @@ export const submitApplication = async (request: FastifyRequest, reply: FastifyR
 
 export const getAllApplications = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
-    const { status, page = 1, limit = 20 } = request.query as any;
+    const { status, page = 1, limit = 20 } = request.query as Record<string, unknown>;
 
-    const query: any = { deletedAt: { $exists: false } };
+    const query: Record<string, unknown> = { deletedAt: { $exists: false } };
 
     if (status) {
       query.status = status;

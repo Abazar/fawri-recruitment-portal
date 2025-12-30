@@ -44,13 +44,16 @@ class APIClient {
     options: RequestInit = {}
   ): Promise<APIResponse<T>> {
     try {
-      const headers: HeadersInit = {
+      const headers = new Headers({
         'Content-Type': 'application/json',
-        ...options.headers,
-      };
-
+      });
+      if (options.headers) {
+        for (const [key, value] of Object.entries(options.headers as Record<string, string>)) {
+          headers.set(key, value as string);
+        }
+      }
       if (this.token) {
-        headers['Authorization'] = `Bearer ${this.token}`;
+        headers.set('Authorization', `Bearer ${this.token}`);
       }
 
       const response = await fetch(`${this.baseURL}${endpoint}`, {

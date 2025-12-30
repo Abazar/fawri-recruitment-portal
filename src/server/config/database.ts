@@ -24,8 +24,8 @@ export const getDatabaseLastError = () => ({
 // Prefer IPv4 results to improve handshake reliability without changing connection strings.
 try {
   // Node >= 17.0
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const setDefaultResultOrder = (dns as any).setDefaultResultOrder as undefined | ((order: string) => void);
+  // Use type assertion for dns module compatibility
+  const setDefaultResultOrder = (dns as unknown as { setDefaultResultOrder?: (order: string) => void }).setDefaultResultOrder;
   setDefaultResultOrder?.('ipv4first');
 } catch {
   // Ignore; not supported on older Node versions.
